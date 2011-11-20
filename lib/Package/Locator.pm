@@ -72,9 +72,9 @@ has _indexes => (
 sub _build__indexes {
     my ($self) = @_;
 
-    my @indexes = map { Package::Locator::Index->new( cache_dir      => $self->cache_dir(),
+    my @indexes = map { Package::Locator::Index->new( force          => $self->force(),
+                                                      cache_dir      => $self->cache_dir(),
                                                       user_agent     => $self->user_agent(),
-                                                      force          => $self->force(),
                                                       repository_url => $_ )
     } $self->repository_urls();
 
