@@ -3,11 +3,15 @@ package Package::Locator::Index;
 # ABSTRACT: The package index of a repository
 
 use Moose;
+use MooseX::Types::Path::Class;
+
 use Carp;
 use Path::Class;
+use File::Temp;
 use Parse::CPAN::Packages::Fast;
 use LWP::UserAgent;
 use URI::Escape;
+use URI;
 
 use namespace::autoclean;
 
@@ -27,21 +31,22 @@ has repository_url => (
 has user_agent => (
    is          => 'ro',
    isa         => 'LWP::UserAgent',
-   required    => 1,
+   default     => sub { LWP::UserAgent->new() },
 );
 
 
 has cache_dir => (
    is         => 'ro',
    isa        => 'Path::Class::Dir',
-   required   => 1,
+   default    => sub { Path::Class::Dir->new( File::Temp::tempdir(CLEANUP => 1) ) },
+   coerce     => 1,
 );
 
 
 has force => (
    is         => 'ro',
    isa        => 'Bool',
-   required   => 1,
+   default    => 0,
 );
 
 
@@ -62,6 +67,22 @@ has _index => (
 
 #------------------------------------------------------------------------------
 
+sub BUILDARGS {
+    my ($class, %args) = @_;
+
+    if (my $cache_dir = $args{cache_dir}) {
+        # Manual coercion here...
+        $cache_dir = dir($cache_dir);
+        $class->__mkpath($cache_dir);
+        $args{cache_dir} = $cache_dir;
+    }
+
+    return \%args;
+}
+
+#------------------------------------------------------------------------------
+
+
 sub _build__index_file {
     my ($self) = @_;
 
@@ -74,7 +95,6 @@ sub _build__index_file {
     $destination->remove() if -e $destination and $self->force();
 
     my $source = URI->new( $url . '/modules/02packages.details.txt.gz' );
-    $self->_debug("Fetching $source");
 
     my $response = $self->user_agent->mirror($source, $destination);
     $self->__handle_ua_response($response, $source, $destination);
@@ -89,7 +109,6 @@ sub _build__index {
 
     my $index_file = $self->_index_file();
 
-    $self->_debug("Parsing $index_file");
     return Parse::CPAN::Packages::Fast->new($index_file->stringify());
 }
 
@@ -131,14 +150,6 @@ sub lookup_dist {
     croak "Found multiple versions of $dist_path" if @found > 1;
 
     return pop @found;
-}
-
-#------------------------------------------------------------------------
-
-sub _debug {
-    my ($self, $message) = @_;
-    print "$message\n";
-    return 1;
 }
 
 #------------------------------------------------------------------------

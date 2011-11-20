@@ -3,6 +3,8 @@ package Package::Locator;
 # ABSTRACT: Find the distribution that provides a given package
 
 use Moose;
+use MooseX::Types::Path::Class;
+
 use Carp;
 use File::Temp;
 use Path::Class;
@@ -39,17 +41,11 @@ has cache_dir => (
    is         => 'ro',
    isa        => 'Path::Class::Dir',
    default    => sub { Path::Class::Dir->new( File::Temp::tempdir(CLEANUP => 1) ) },
+   coerce     => 1,
 );
 
 
 has force => (
-   is         => 'ro',
-   isa        => 'Bool',
-   default    => 0,
-);
-
-
-has fallback => (
    is         => 'ro',
    isa        => 'Bool',
    default    => 0,
@@ -63,13 +59,6 @@ has get_any => (
 );
 
 
-has verbose   => (
-    is        => 'ro',
-    isa       => 'Bool',
-    default   => 0,
-);
-
-
 has _indexes => (
    is         => 'ro',
    isa        => 'ArrayRef[Package::Locator::Index]',
@@ -77,21 +66,6 @@ has _indexes => (
    lazy_build => 1,
 );
 
-
-#------------------------------------------------------------------------------
-
-sub BUILDARGS {
-    my ($class, %args) = @_;
-
-    if (my $cache_dir = $args{cache_dir}) {
-        # Manual coercion here...
-        $cache_dir = dir($cache_dir);
-        $class->__mkpath($cache_dir);
-        $args{cache_dir} = $cache_dir;
-    }
-
-    return \%args;
-}
 
 #------------------------------------------------------------------------------
 
