@@ -2,9 +2,20 @@
 
 use strict;
 use warnings;
+
+use Getopt::Long;
+use Pod::Usage;
 use Package::Locator;
 
+my @opts_spec = qw(cache_dir|cache=s force get_any|any verbose);
+GetOptions(\my %opts, @opts_spec) || pod2usage();
+my @wanted = @ARGV ? @ARGV : pod2usage();
 
-my $locator = Package::Locator->new();
-my $found  = $locator->locate(shift);
-print "$found\n" if $found;
+my $locator   = Package::Locator->new(%opts);
+my %found     = map { my $p = $_; $p => $locator->locate($p) || '' } @wanted;
+my $longest = (sort { $b <=> $a } map { length } keys %found)[0];
+printf "%-${longest}s => %s\n", $_, $found{$_} for sort keys %found;
+
+exit;
+
+#-----------------------------------------------------------------------------
