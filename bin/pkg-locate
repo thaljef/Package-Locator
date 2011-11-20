@@ -1,0 +1,10 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Package::Locator;
+
+
+my $locator = Package::Locator->new();
+my $found  = $locator->locate(shift);
+print "$found\n" if $found;
