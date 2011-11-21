@@ -1,5 +1,8 @@
 #!/usr/bin/perl
 
+# ABSTRACT: Find the distribution that contains a package
+# PODNAME: pkg-locate
+
 use strict;
 use warnings;
 
