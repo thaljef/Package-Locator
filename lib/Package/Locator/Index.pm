@@ -241,5 +241,5 @@ contains only the latest version of each package.
 =head2 new( %attributes )
 
 All the attributes listed below can be passed to the constructor, and
-retrieved by accessor methods with the same name.  All attributes are
+retrieved via accessor methods with the same name.  All attributes are
 read-only, and cannot be changed once the object is constructed.

@@ -143,7 +143,7 @@ sub _build__indexes {
 =method locate( '/F/FO/FOO/Bar-1.2.tar.gz' )
 
 Given the name of a package, searches all the repository indexes and
-returns the URL to a distribution that contains that package.  If you
+returns the URL to a distribution containing that package.  If you
 specify a version, then you'll always get a distribution that contains
 that version of the package or higher.  If the C<get_latest> attribute
 is true, then you'll always get the distribution that contains latest
@@ -291,17 +291,27 @@ __END__
 
 =head1 DESCRIPTION
 
-L<Package::Locator> attempts to answer the question: "Where is a
-distribution that will provide this package".  The answer is divined
+L<Package::Locator> attempts to answer the question: "Where can I find
+a distribution that will provide this package?"  The answer is divined
 by searching the indexes for one or more CPAN-like repositories.  If
 you also provide a specific version number, L<Package::Locator> will
-attempt to find a distribution with that package version or higher.
+attempt to find a distribution with that version of the package, or
+higher.
 
 L<Package::Locator> only looks at the index files for each repository,
 and those indexes only contain information about the latest versions
-of the packages in that repository.  So L<Package::Locator> is not
+of the packages within that repository.  So L<Package::Locator> is not
 BACKPAN magic -- you cannot use it to find precisely which
-distribution a particular package (or file) came from.
+distribution a particular package (or file) came from.  For that
+stuff, see C<"/See Also">.
+
+=head1 CONSTRUCTOR
+
+=head2 new( %attributes )
+
+All the attributes listed below can be passed to the constructor, and
+retrieved via accessor methods with the same name.  All attributes are
+read-only, and cannot be changed once the object is constructed.
 
 =head1  SEE ALSO
 
