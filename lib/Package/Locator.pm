@@ -301,7 +301,7 @@ higher.
 L<Package::Locator> only looks at the index files for each repository,
 and those indexes only contain information about the latest versions
 of the packages within that repository.  So L<Package::Locator> is not
-BACKPAN magic -- you cannot use it to find precisely which
+BackPAN magic -- you cannot use it to find precisely which
 distribution a particular package (or file) came from.  For that
 stuff, see C<"/See Also">.
 
