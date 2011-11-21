@@ -22,6 +22,16 @@ use namespace::autoclean;
 
 #------------------------------------------------------------------------------
 
+=attr repository_urls => [ qw(http://somewhere http://somewhere.else) ]
+
+An array reference containing the base URLs of the repositories you
+want to search.  These are usually CPAN mirrors, but can be any
+website or local directory that is organized in a CPAN-like structure.
+For each request, repositories are searched in the order you specified
+them here.  This defaults to http://cpan.perl.org.
+
+=cut
+
 has repository_urls => (
     is         => 'ro',
     isa        => 'ArrayRef[URI]',
@@ -29,6 +39,15 @@ has repository_urls => (
     default    => sub { [URI->new('http://cpan.perl.org')] },
 );
 
+#------------------------------------------------------------------------------
+
+=attr user_agent => $user_agent_obj
+
+The L<LWP::UserAgent> object that will fetch index files.  If you do
+not provide a user agent, then a default one will be constructed for
+you.
+
+=cut
 
 has user_agent => (
    is          => 'ro',
@@ -36,6 +55,17 @@ has user_agent => (
    default     => sub { LWP::UserAgent->new() },
 );
 
+#------------------------------------------------------------------------------
+
+=attr cache_dir => '/some/directory/path'
+
+The path (as a string or L<Path::Class::Dir> object) to a directory
+where the index file will be cached.  If the directory does not exist,
+it will be created for you.  If you do not specify a cache directory,
+then a temporary directory will be used.  The temporary directory will
+be deleted when your application terminates.
+
+=cut
 
 has cache_dir => (
    is         => 'ro',
@@ -44,6 +74,15 @@ has cache_dir => (
    coerce     => 1,
 );
 
+#------------------------------------------------------------------------------
+
+=attr force => $boolean
+
+Causes any cached index files to be removed, thus forcing a new one to
+be downloaded when the object is constructed.  This only has effect if
+you specified the C<cache_dir> attribute.  The default is false.
+
+=cut
 
 has force => (
    is         => 'ro',
@@ -51,13 +90,27 @@ has force => (
    default    => 0,
 );
 
+#------------------------------------------------------------------------------
 
-has get_any => (
+=attr get_latest => $boolean
+
+Always return the distribution from the repository that has the latest
+version of the requested package, instead of just from the first
+repository where that package was found.  If you requested a
+particular version of package, then the returned distribution will
+always contain that package version or greater, regardless of the
+C<get_latest> setting.  Default is false.
+
+=cut
+
+has get_latest => (
    is         => 'ro',
    isa        => 'Bool',
    default    => 0,
 );
 
+
+#------------------------------------------------------------------------------
 
 has _indexes => (
    is         => 'ro',
@@ -142,7 +195,7 @@ sub _locate_package {
 
         $found_in_index       ||= $index;
         $latest_found_package ||= $found_package;
-        last if $self->get_any();
+        last unless $self->get_latest();
 
         ($found_in_index, $latest_found_package) = ($index, $found_package)
             if $self->__compare_packages($latest_found_package, $found_package) == 1;
@@ -212,3 +265,50 @@ __PACKAGE__->meta->make_immutable();
 1;
 
 __END__
+
+=head1 SYNOPSIS
+
+  use Package::Locator;
+
+  # Basic search...
+  my $locator = Package::Locator->new();
+  my $url = locator->locate( 'Test::More' );
+
+  # Search for first within multiple repositories:
+  my $repos = [ qw(http://cpan.pair.com http://my.company.com/DPAN) ];
+  my $locator = Package::Locator->new( repository_urls => $repos );
+  my $url = locator->locate( 'Test::More' );
+
+  # Search for first where version >= 0.34:
+  my $repos = [ qw(http://cpan.pair.com http://my.company.com/DPAN) ];
+  my $locator = Package::Locator->new( repository_urls => $repos );
+  my $url = locator->locate( 'Test::More' => 0.34);
+
+  # Search for latest where version  >= 0.34:
+  my $repos = [ qw(http://cpan.pair.com http://my.company.com/DPAN) ];
+  my $locator = Package::Locator->new( repository_urls => $repos, get_latest => 1 );
+  my $url = locator->locate( 'Test::More' => 0.34);
+
+=head1 DESCRIPTION
+
+L<Package::Locator> attempts to answer the question: "Where is a
+distribution that will provide this package".  The answer is divined
+by searching the indexes for one or more CPAN-like repositories.  If
+you also provide a specific version number, L<Package::Locator> will
+attempt to find a distribution with that package version or higher.
+
+L<Package::Locator> only looks at the index files for each repository,
+and those indexes only contain information about the latest versions
+of the packages in that repository.  So L<Package::Locator> is not
+BACKPAN magic -- you cannot use it to find precisely which
+distribution a particular package (or file) came from.
+
+=head1  SEE ALSO
+
+If you need to find a precise version of a package/distribution rather
+than just a version that is "new enough", then look at some of these:
+
+L<Dist::Surveyor>
+L<BackPAN::Index>
+L<BackPAN::Version::Discover>
+
