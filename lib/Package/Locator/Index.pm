@@ -3,6 +3,7 @@ package Package::Locator::Index;
 # ABSTRACT: The package index of a repository
 
 use Moose;
+use MooseX::Types::URI qw(Uri);
 use MooseX::Types::Path::Class;
 
 use Carp;
@@ -21,12 +22,29 @@ use namespace::autoclean;
 
 #------------------------------------------------------------------------
 
+=attr repository_url => 'http://somewhere'
+
+The base URL of the repository you want to get the index from.  This
+is ususally a CPAN mirror, but can be any site or directory that is
+organized in a CPAN-like structure.  This attribute is required.
+
+=cut
+
 has repository_url => (
     is        => 'ro',
-    isa       => 'URI',
+    isa       => Uri,
     required  => 1,
+    coerce    => 1,
 );
 
+
+=attr user_agent => $user_agent_obj
+
+The L<LWP::UserAgent> object that will fetch the index file.  If you
+do not provide a user agent, then a default one will be constructed
+for you.
+
+=cut
 
 has user_agent => (
    is          => 'ro',
@@ -34,6 +52,15 @@ has user_agent => (
    default     => sub { LWP::UserAgent->new() },
 );
 
+=attr cache_dir => '/some/directory/path'
+
+The path (as a string or L<Path::Class::Dir> object) to a directory
+where the index file will be cached.  If the directory does not exist,
+it will be created for you.  If you do not specify a cache directory,
+then a temporary directory will be used.  The temporary directory will
+be deleted when your application terminates.
+
+=cut
 
 has cache_dir => (
    is         => 'ro',
@@ -42,6 +69,14 @@ has cache_dir => (
    coerce     => 1,
 );
 
+
+=attr force => $boolean
+
+Causes any cached index files to be removed, thus forcing a new one to
+be downloaded when the object is constructed.  This only has effect if
+you specified the C<cache_dir> attribute.  The default is false.
+
+=cut
 
 has force => (
    is         => 'ro',
@@ -86,15 +121,15 @@ sub BUILDARGS {
 sub _build__index_file {
     my ($self) = @_;
 
-    my $url = $self->repository_url();
+    my $repos_url = $self->repository_url->canonical();;
 
-    my $cache_dir = $self->cache_dir->subdir( URI::Escape::uri_escape($url) );
+    my $cache_dir = $self->cache_dir->subdir( URI::Escape::uri_escape($repos_url) );
     $self->__mkpath($cache_dir);
 
     my $destination = $cache_dir->file('02packages.details.txt.gz');
     $destination->remove() if -e $destination and $self->force();
 
-    my $source = URI->new( $url . '/modules/02packages.details.txt.gz' );
+    my $source = URI->new( "$repos_url/modules/02packages.details.txt.gz" );
 
     my $response = $self->user_agent->mirror($source, $destination);
     $self->__handle_ua_response($response, $source, $destination);
@@ -122,6 +157,8 @@ sub __handle_ua_response {
     croak sprintf 'Request to %s failed: %s', $source, $response->status_line();
 }
 
+#------------------------------------------------------------------------------
+
 sub __mkpath {
     my ($self, $dir) = @_;
 
@@ -132,6 +169,14 @@ sub __mkpath {
 
 #------------------------------------------------------------------------
 
+=method lookup_package( $package_name )
+
+Returns an object representing the distribution that contains the
+specified C<$package_name>.  Returns undef if the index does not know
+of any such C<$package_name>
+
+=cut
+
 sub lookup_package {
     my ($self, $package_name) = @_;
 
@@ -139,6 +184,14 @@ sub lookup_package {
 }
 
 #------------------------------------------------------------------------
+
+=method lookup_dist( $dist_path )
+
+Returns an object representing the distribution located at the
+specified C<$dist_path>.  Returns undef if the index does not know of
+any such C<$dist_path>.
+
+=cut
 
 sub lookup_dist {
     my ($self, $dist_path) = @_;
@@ -161,3 +214,32 @@ __PACKAGE__->meta->make_immutable();
 
 __END__
 
+=head1 SYNOPSIS
+
+  use Package::Locator::Index;
+
+  my $index = Package::Locator::Index->new( repository_url => 'http://somewhere' );
+  my $dist  = $index->lookup_dist( 'F/FO/FOO/Bar-1.0.tar.gz' );
+  my $pkg   = $index->lookup_package( 'Foo::Bar' );
+
+=head1 DESCRIPTION
+
+B<This is a private module and there are no user-servicable parts
+here.  The API documentation is for my own reference only.>
+
+L<Package::Locator::Index> represents the contents of the index file
+for a CPAN-like repository.  You can then query the index to find
+which distribution a package is in, or if the index contains a
+particular distribution at all.
+
+It is assumed that the index file conforms to the typical
+F<02package.details.txt.gz> file format, and that the index file
+contains only the latest version of each package.
+
+=head1 CONSTRUCTOR
+
+=head2 new( %attributes )
+
+All the attributes listed below can be passed to the constructor, and
+retrieved by accessor methods with the same name.  All attributes are
+read-only, and cannot be changed once the object is constructed.
