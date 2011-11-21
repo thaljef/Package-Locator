@@ -25,7 +25,7 @@ use namespace::autoclean;
 =attr repository_url => 'http://somewhere'
 
 The base URL of the repository you want to get the index from.  This
-is ususally a CPAN mirror, but can be any site or directory that is
+is usually a CPAN mirror, but can be any site or directory that is
 organized in a CPAN-like structure.  This attribute is required.
 
 =cut
@@ -224,7 +224,7 @@ __END__
 
 =head1 DESCRIPTION
 
-B<This is a private module and there are no user-servicable parts
+B<This is a private module and there are no user-serviceable parts
 here.  The API documentation is for my own reference only.>
 
 L<Package::Locator::Index> represents the contents of the index file

@@ -83,6 +83,30 @@ sub _build__indexes {
 
 #------------------------------------------------------------------------------
 
+=method locate( 'Foo::Bar' )
+
+=method locate( 'Foo::Bar' => '1.2' )
+
+=method locate( '/F/FO/FOO/Bar-1.2.tar.gz' )
+
+Given the name of a package, searches all the repository indexes and
+returns the URL to a distribution that contains that package.  If you
+specify a version, then you'll always get a distribution that contains
+that version of the package or higher.  If the C<get_latest> attribute
+is true, then you'll always get the distribution that contains latest
+version of the package that can be found on all the indexes.
+Otherwise you'll just get the first distribution we can find that
+satisfies your request.
+
+If you give a distribution path instead (i.e. anything that has
+slashes '/' in it) then you'll just get back the URL to the first
+distribution we find at that path in any of the repository indexes.
+
+If neither the package nor the distribution path can be found in any
+of the indexes, returns undef.
+
+=cut
+
 sub locate {
     my ($self, @args) = @_;
 
@@ -92,11 +116,12 @@ sub locate {
     my ($package, $version, $dist);
 
     ($package, $version) = @args         if @args == 2;
-    ($package, $version) = ($args[0], 0) if $args[0] !~ m{/};
+    ($package, $version) = ($args[0], 0) if $args[0] !~ m{/}x;
     $dist = $args[0];
 
     return $self->_locate_package($package, $version) if $package;
     return $self->_locate_dist($dist) if $dist;
+    return; #Should never get here!
 }
 
 #------------------------------------------------------------------------------
@@ -117,7 +142,7 @@ sub _locate_package {
 
         $found_in_index       ||= $index;
         $latest_found_package ||= $found_package;
-        last if $self->get_any();;
+        last if $self->get_any();
 
         ($found_in_index, $latest_found_package) = ($index, $found_package)
             if $self->__compare_packages($latest_found_package, $found_package) == 1;
@@ -140,7 +165,6 @@ sub _locate_dist {
     my ($self, $dist_path) = @_;
 
     for my $index ( $self->_indexes() ) {
-      $DB::single = 1;
         if ( my $found = $index->lookup_dist($dist_path) ) {
             my $base_url = $index->repository_url();
             return URI->new( "$base_url/authors/id" . $found->prefix() );
