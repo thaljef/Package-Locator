@@ -313,10 +313,22 @@ All the attributes listed below can be passed to the constructor, and
 retrieved via accessor methods with the same name.  All attributes are
 read-only, and cannot be changed once the object is constructed.
 
+=head1 MOTIVATION
+
+The L<CPAN> module also provides a mechanism for locating packages or
+distributions, much like L<Package::Locator> does.  However, L<CPAN>
+assumes that all repositories are CPAN mirrors, so it only searches
+the first repository that it can contact.
+
+My secret ambition is to fill the world with lots of DarkPAN
+repositories -- each with its own set of distributions.  For that
+scenario, I need to search multiple repositories at the same time.
+
 =head1  SEE ALSO
 
-If you need to find a precise version of a package/distribution rather
-than just a version that is "new enough", then look at some of these:
+If you need to locate a distribution that contains a precise version
+of a file rather than just a version that is "new enough", then look
+at some of these:
 
 L<Dist::Surveyor>
 L<BackPAN::Index>
