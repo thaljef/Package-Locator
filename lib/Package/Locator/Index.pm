@@ -180,7 +180,9 @@ of any such C<$package_name>
 sub lookup_package {
     my ($self, $package_name) = @_;
 
-    return $self->_index->package($package_name);
+    my $found = eval { $self->_index->package($package_name) };
+
+    return $found ? $found : ();
 }
 
 #------------------------------------------------------------------------
@@ -202,7 +204,7 @@ sub lookup_dist {
 
     croak "Found multiple versions of $dist_path" if @found > 1;
 
-    return pop @found;
+    return @found ? pop @found : ();
 }
 
 #------------------------------------------------------------------------
