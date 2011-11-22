@@ -1,5 +1,8 @@
 {{$NEXT}}
 
+    Found a bunch of bugs by writing test cases.  The first release
+    didn't really work as advertised.  This one actually has a chance.
+
 0.001     2011-11-21 15:32:09 America/Los_Angeles
 
     Initial release.
