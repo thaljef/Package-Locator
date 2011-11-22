@@ -17,7 +17,7 @@ my @repos_urls = map { URI->new("file://$repos_dir/$_") } qw(a b);
 
 #------------------------------------------------------------------------------
 
-my $first_locator= Package::Locator->new( repository_urls => \@repos_urls );
+my $first_locator = Package::Locator->new( repository_urls => \@repos_urls );
 
 $found = $first_locator->locate('Foo');
 is($found, "file://$repos_dir/a/authors/id/A/AU/AUTHOR/Foo-1.0.tar.gz",
@@ -46,7 +46,8 @@ is($found, undef, 'Locate non-existant version');
 
 #------------------------------------------------------------------------------
 
-my $latest_locator = Package::Locator->new( repository_urls => \@repos_urls, get_latest => 1 );
+my $latest_locator = Package::Locator->new( repository_urls => \@repos_urls,
+                                            get_latest      => 1 );
 
 $found = $latest_locator->locate('Foo');
 is($found, "file://$repos_dir/b/authors/id/A/AU/AUTHOR/Foo-2.0.tar.gz",
