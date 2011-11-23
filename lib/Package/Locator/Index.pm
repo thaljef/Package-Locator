@@ -183,6 +183,11 @@ of any such C<$package_name>
 sub lookup_package {
     my ($self, $package_name) = @_;
 
+    # Parse::CPAN::Packages::Fast will throw an exception if the index
+    # does not contain the requested package.  If that happens we just
+    # want to return undef.  But we still want all other exceptions
+    # (such as failure to fetch the index file) to bubble up.
+
     my $found;
     try   { $found = $self->_index->package($package_name) }
     catch { croak $_ unless m/Package $package_name does not exist/ };
