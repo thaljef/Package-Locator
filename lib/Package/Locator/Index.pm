@@ -7,6 +7,7 @@ use MooseX::Types::URI qw(Uri);
 use MooseX::Types::Path::Class;
 
 use Carp;
+use Try::Tiny;
 use Path::Class;
 use File::Temp;
 use Parse::CPAN::Packages::Fast;
@@ -121,7 +122,9 @@ sub BUILDARGS {
 sub _build__index_file {
     my ($self) = @_;
 
-    my $repos_url = $self->repository_url->canonical();;
+    my $repos_url = $self->repository_url->canonical()->as_string();
+    $repos_url =~ s{ /*$ }{}mx;         # Remove trailing slash
+    $repos_url = URI->new($repos_url);  # Reconstitute as URI object
 
     my $cache_dir = $self->cache_dir->subdir( URI::Escape::uri_escape($repos_url) );
     $self->__mkpath($cache_dir);
@@ -162,7 +165,7 @@ sub __handle_ua_response {
 sub __mkpath {
     my ($self, $dir) = @_;
 
-    return if -e $dir;
+    return 1 if -e $dir;
     $dir = dir($dir) unless eval { $dir->isa('Path::Class::Dir') };
     return $dir->mkpath() or croak "Failed to make directory $dir: $!";
 }
@@ -180,7 +183,9 @@ of any such C<$package_name>
 sub lookup_package {
     my ($self, $package_name) = @_;
 
-    my $found = eval { $self->_index->package($package_name) };
+    my $found;
+    try   { $found = $self->_index->package($package_name) }
+    catch { croak $_ unless m/Package $package_name does not exist/ };
 
     return $found ? $found : ();
 }
