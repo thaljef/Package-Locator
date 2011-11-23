@@ -190,7 +190,7 @@ sub lookup_package {
 
     my $found;
     try   { $found = $self->_index->package($package_name) }
-    catch { croak $_ unless m/Package $package_name does not exist/ };
+    catch { croak $_ unless m/Package $package_name does not exist/ };  ## no critic qw(RequireExtendedFormatting)
 
     return $found ? $found : ();
 }
