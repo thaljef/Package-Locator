@@ -7,10 +7,10 @@ use MooseX::Types::URI qw(Uri);
 use MooseX::Types::Path::Class;
 
 use Carp;
-use Try::Tiny;
-use Path::Class;
 use File::Temp;
-use Parse::CPAN::Packages::Fast;
+use Path::Class;
+use PerlIO::gzip;
+use Scalar::Util;
 use LWP::UserAgent;
 use URI::Escape;
 use URI;
@@ -85,41 +85,82 @@ has force => (
    default    => 0,
 );
 
+=method index_file()
 
-has _index_file => (
+Returns the path to the local copy of the index file (as a
+L<Path::Class::File>).
+
+=cut
+
+has index_file => (
     is         => 'ro',
     isa        => 'Path::Class::File',
     init_arg   => undef,
     lazy_build => 1,
 );
 
+=method distributions
 
-has _index => (
+Returns a hashref representing the contents of the index.  The keys
+are the paths to the distributions (as they appear in the index).  The
+values are data structures that look like this:
+
+  {
+    path     => 'A/AU/AUTHOR/FooBar-1.0.tar.gz',
+    source   => 'http://some.cpan.mirror'
+    packages => [ ## See package structure below ## ]
+  }
+
+Note there is a circular reference between a package and a distribution.
+The package references have been weakened to prevent memory leaks.
+
+=cut
+
+has distributions => (
+   is         => 'ro',
+   isa        => 'HashRef',
+   init_arg   => undef,
+   default    => sub { $_[0]->_data->{distributions} },
+   lazy       => 1,
+);
+
+
+=method packages
+
+Returns a hashref representing the contents of the index.  The keys
+are the names of packages.  The values are data structures that look
+like this:
+
+  {
+    name         => 'Foo',
+    version      => '1.0',
+    distribution => ## See distribution structure above ##
+  }
+
+Note there is a circular reference between a package and a distribution.
+The package references have been weakened to prevent memory leaks.
+
+=cut
+
+has packages => (
+   is         => 'ro',
+   isa        => 'HashRef',
+   init_arg   => undef,
+   default    => sub { $_[0]->_data->{packages} },
+   lazy       => 1,
+);
+
+
+has _data => (
     is         => 'ro',
-    isa        => 'Parse::CPAN::Packages::Fast',
+    isa        => 'HashRef',
     init_arg   => undef,
     lazy_build => 1,
 );
 
 #------------------------------------------------------------------------------
 
-sub BUILDARGS {
-    my ($class, %args) = @_;
-
-    if (my $cache_dir = $args{cache_dir}) {
-        # Manual coercion here...
-        $cache_dir = dir($cache_dir);
-        $class->__mkpath($cache_dir);
-        $args{cache_dir} = $cache_dir;
-    }
-
-    return \%args;
-}
-
-#------------------------------------------------------------------------------
-
-
-sub _build__index_file {
+sub _build_index_file {
     my ($self) = @_;
 
     my $repos_url = $self->repository_url->canonical()->as_string();
@@ -142,15 +183,49 @@ sub _build__index_file {
 
 #------------------------------------------------------------------------------
 
-sub _build__index {
+sub _build__data {
     my ($self) = @_;
 
-    my $index_file = $self->_index_file();
+    my $file = $self->index_file();
+    open my $fh, '<:gzip', $file or croak "Failed to open index file $file: $!";
+    my $data = $self->__read_index($fh);
+    close $fh;
 
-    return Parse::CPAN::Packages::Fast->new($index_file->stringify());
+    return $data;
 }
 
 #------------------------------------------------------------------------------
+
+sub __read_index {
+    my ($self, $fh) = @_;
+
+    my $inheader      = 1;
+    my $packages      = {};
+    my $distributions = {};
+    my $source        = $self->repository_url();
+
+    while (<$fh>) {
+
+        if ($inheader) {
+            $inheader = 0 if not m/ \S /x;
+            next;
+        }
+
+        chomp;
+        my ($package, $version, $dist_path) = split;
+        my $dist_struct = $distributions->{$dist_path} ||= { source => $source, path => $dist_path };
+        my $pkg_struct  = {name => $package, version => $version, distribution => $dist_struct};
+        push @{ $dist_struct->{packages} ||= [] }, $pkg_struct;
+        $packages->{$package} = $pkg_struct;
+        Scalar::Util::weaken($pkg_struct);
+
+    }
+
+    return { packages      => $packages,
+             distributions => $distributions };
+}
+
+#------------------------------------------------------------------------
 
 sub __handle_ua_response {
     my ($self, $response, $source, $destination) = @_;
@@ -172,53 +247,6 @@ sub __mkpath {
 
 #------------------------------------------------------------------------
 
-=method lookup_package( $package_name )
-
-Returns an object representing the distribution that contains the
-specified C<$package_name>.  Returns undef if the index does not know
-of any such C<$package_name>
-
-=cut
-
-sub lookup_package {
-    my ($self, $package_name) = @_;
-
-    # Parse::CPAN::Packages::Fast will throw an exception if the index
-    # does not contain the requested package.  If that happens we just
-    # want to return undef.  But we still want all other exceptions
-    # (such as failure to fetch the index file) to bubble up.
-
-    my $found;
-    try   { $found = $self->_index->package($package_name) }
-    catch { croak $_ unless m/Package $package_name does not exist/ };  ## no critic qw(RequireExtendedFormatting)
-
-    return $found ? $found : ();
-}
-
-#------------------------------------------------------------------------
-
-=method lookup_dist( $dist_path )
-
-Returns an object representing the distribution located at the
-specified C<$dist_path>.  Returns undef if the index does not know of
-any such C<$dist_path>.
-
-=cut
-
-sub lookup_dist {
-    my ($self, $dist_path) = @_;
-
-    my @dists = $self->_index->distributions();
-
-    my @found = grep { $_->prefix() eq $dist_path } @dists;
-
-    croak "Found multiple versions of $dist_path" if @found > 1;
-
-    return @found ? pop @found : ();
-}
-
-#------------------------------------------------------------------------
-
 __PACKAGE__->meta->make_immutable();
 
 #------------------------------------------------------------------------
@@ -231,27 +259,33 @@ __END__
   use Package::Locator::Index;
 
   my $index = Package::Locator::Index->new( repository_url => 'http://somewhere' );
-  my $dist  = $index->lookup_dist( 'F/FO/FOO/Bar-1.0.tar.gz' );
-  my $pkg   = $index->lookup_package( 'Foo::Bar' );
+  my $dist  = $index->distributions->{'A/AU/AUTHOR/Foo-Bar-1.0.tar.gz'};
+  my $pkg   = $index->packages->{'Foo::Bar'};
 
 =head1 DESCRIPTION
 
 B<This is a private module and there are no user-serviceable parts
 here.  The API documentation is for my own reference only.>
 
-L<Package::Locator::Index> represents the contents of the index file
-for a CPAN-like repository.  You can then query the index to find
-which distribution a package is in, or if the index contains a
-particular distribution at all.
+L<Package::Locator::Index> is yet-another module for parsing the
+contents of the F<02packages.details.txt> file from a CPAN-like
+repository.
 
-It is assumed that the index file conforms to the typical
-F<02package.details.txt.gz> file format, and that the index file
-contains only the latest version of each package.
+=head1 MOTIVATION
+
+There are numerous existing modules for parsing the
+F<02packages.details.txt> file, but I wasn't completely happy with any
+of them.  Most of the existing modules transform the data into various
+flavors of Distribution and Package objects. But I'm not ready to
+commit to any particular API for Distributions and Packages (not even
+one of my own).  So L<Package::Locator::Index> exposes the index data
+as simple data structures.
 
 =head1 CONSTRUCTOR
 
 =head2 new( %attributes )
 
 All the attributes listed below can be passed to the constructor, and
-retrieved via accessor methods with the same name.  All attributes are
-read-only, and cannot be changed once the object is constructed.
+can be retrieved via accessor methods with the same name.  All
+attributes are read-only, and cannot be changed once the object is
+constructed.

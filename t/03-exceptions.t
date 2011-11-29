@@ -15,11 +15,11 @@ my $class = 'Package::Locator';
 #------------------------------------------------------------------------------
 
 throws_ok { $class->new()->locate() }
-    qr/Must specify package, package => version, or dist/;
+    qr/Must specify package, or package => version, or distribution/;
 
 
 throws_ok { $class->new()->locate('Foo', 'Bar', 2.3) }
-    qr/Must specify package, package => version, or dist/;
+    qr/Must specify package, or package => version, or distribution/;
 
 
 throws_ok { $class->new()->locate('Foo', '2.3-RC') }

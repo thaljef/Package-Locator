@@ -9,6 +9,7 @@ use Carp;
 use File::Temp;
 use Path::Class;
 use LWP::UserAgent;
+use CPAN::DistnameInfo;
 use URI;
 
 use Package::Locator::Index;
@@ -174,7 +175,7 @@ of the indexes, returns undef.
 sub locate {
     my ($self, @args) = @_;
 
-    croak 'Must specify package, package => version, or dist'
+    croak 'Must specify package, or package => version, or distribution'
         if @args < 1 or @args > 2;
 
     my ($package, $version, $dist);
@@ -204,10 +205,10 @@ sub _locate_package {
     my ($latest_found_package, $found_in_index);
     for my $index ( $self->indexes() ) {
 
-        my $found_package = $index->lookup_package($package);
+        my $found_package = $index->packages->{$package};
         next if not $found_package;
 
-        my $found_package_version = version->parse( $found_package->version() );
+        my $found_package_version = version->parse( $found_package->{version} );
         next if $found_package_version < $wanted_version;
 
         $found_in_index       ||= $index;
@@ -221,9 +222,9 @@ sub _locate_package {
 
     if ($latest_found_package) {
         my $base_url = $found_in_index->repository_url();
-        my $latest_dist = $latest_found_package->distribution();
-        my $latest_dist_prefix = $latest_dist->prefix();
-        return  URI->new( "$base_url/authors/id/" . $latest_dist_prefix );
+        my $latest_dist = $latest_found_package->{distribution};
+        my $latest_dist_path = $latest_dist->{path};
+        return  URI->new( "$base_url/authors/id/" . $latest_dist_path );
     }
 
     return;
@@ -235,9 +236,9 @@ sub _locate_dist {
     my ($self, $dist_path) = @_;
 
     for my $index ( $self->indexes() ) {
-        if ( my $found = $index->lookup_dist($dist_path) ) {
+        if ( my $found_dist = $index->distributions->{$dist_path} ) {
             my $base_url = $index->repository_url();
-            return URI->new( "$base_url/authors/id/" . $found->prefix() );
+            return URI->new( "$base_url/authors/id/" . $found_dist->{path} );
         }
     }
 
@@ -249,28 +250,15 @@ sub _locate_dist {
 sub __compare_packages {
     my ($self, $pkg_a, $pkg_b) = @_;
 
-    my $pkg_a_version = version->parse( $pkg_a->version() );
-    my $pkg_b_version = version->parse( $pkg_b->version() );
+    my $pkg_a_version = version->parse( $pkg_a->{version} );
+    my $pkg_b_version = version->parse( $pkg_b->{version} );
 
-    my $dist_a_name  = $pkg_a->distribution->dist();
-    my $dist_b_name  = $pkg_b->distribution->dist();
-    my $have_same_dist_name = $dist_a_name eq $dist_b_name;
 
-    my $dist_a_version = $pkg_a->distribution->version();
-    my $dist_b_version = $pkg_b->distribution->version();
+    my $dist_a_version = CPAN::DistnameInfo->new($pkg_a->{distribution}->{path})->version();
+    my $dist_b_version = CPAN::DistnameInfo->new($pkg_b->{distribution}->{path})->version();
 
     return    ($pkg_a_version  <=> $pkg_b_version)
-           || ($have_same_dist_name && ($dist_a_version <=> $dist_b_version) );
-}
-
-#------------------------------------------------------------------------------
-
-sub __mkpath {
-    my ($self, $dir) = @_;
-
-    return if -e $dir;
-    $dir = dir($dir) unless eval { $dir->isa('Path::Class::Dir') };
-    return $dir->mkpath() or croak "Failed to make directory $dir: $!";
+           || ($dist_a_version <=> $dist_b_version);
 }
 
 #------------------------------------------------------------------------------
