@@ -112,17 +112,28 @@ has get_latest => (
 
 #------------------------------------------------------------------------------
 
-has _indexes => (
+=attr indexes()
+
+Returns a list of L<Package::Locator::Index> objects representing the
+indexes of each of the repositories.  The indexes are only populated
+on-demand when the C<locate> method is called.  The order of the
+indexes is the same as the order of the repositories defined by the
+C<repository_urls> attribute.
+
+=cut
+
+has indexes => (
    is         => 'ro',
    isa        => 'ArrayRef[Package::Locator::Index]',
    auto_deref => 1,
    lazy_build => 1,
+   init_arg   => undef,
 );
 
 
 #------------------------------------------------------------------------------
 
-sub _build__indexes {
+sub _build_indexes {
     my ($self) = @_;
 
     my @indexes = map { Package::Locator::Index->new( force          => $self->force(),
@@ -191,7 +202,7 @@ sub _locate_package {
     my $wanted_version = version->parse($version);
 
     my ($latest_found_package, $found_in_index);
-    for my $index ( $self->_indexes() ) {
+    for my $index ( $self->indexes() ) {
 
         my $found_package = $index->lookup_package($package);
         next if not $found_package;
@@ -223,7 +234,7 @@ sub _locate_package {
 sub _locate_dist {
     my ($self, $dist_path) = @_;
 
-    for my $index ( $self->_indexes() ) {
+    for my $index ( $self->indexes() ) {
         if ( my $found = $index->lookup_dist($dist_path) ) {
             my $base_url = $index->repository_url();
             return URI->new( "$base_url/authors/id/" . $found->prefix() );
