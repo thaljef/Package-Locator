@@ -6,7 +6,7 @@ use warnings;
 use Path::Class;
 use FindBin qw($Bin);
 
-use Test::More (tests => 9);
+use Test::More (tests => 8);
 
 use Package::Locator::Index;
 
@@ -23,8 +23,7 @@ my $pkg = $index->packages->{Foo};
 ok($pkg, 'Found package');
 is($pkg->{name}, 'Foo', 'Package name');
 is($pkg->{version}, '1.0', 'Package version');
-is($pkg->{distribution}->{path}, 'A/AU/AUTHOR/Foo-1.0.tar.gz', 'Dist path');
-is($pkg->{distribution}->{source}, $repos_url, 'Dist path');
+is($pkg->{distribution}, 'A/AU/AUTHOR/Foo-1.0.tar.gz', 'Dist path');
 
 #------------------------------------------------------------------------------
 

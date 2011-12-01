@@ -222,8 +222,7 @@ sub _locate_package {
 
     if ($latest_found_package) {
         my $base_url = $found_in_index->repository_url();
-        my $latest_dist = $latest_found_package->{distribution};
-        my $latest_dist_path = $latest_dist->{path};
+        my $latest_dist_path = $latest_found_package->{distribution};
         return  URI->new( "$base_url/authors/id/" . $latest_dist_path );
     }
 
@@ -253,12 +252,8 @@ sub __compare_packages {
     my $pkg_a_version = version->parse( $pkg_a->{version} );
     my $pkg_b_version = version->parse( $pkg_b->{version} );
 
-
-    my $dist_a_version = CPAN::DistnameInfo->new($pkg_a->{distribution}->{path})->version();
-    my $dist_b_version = CPAN::DistnameInfo->new($pkg_b->{distribution}->{path})->version();
-
-    return    ($pkg_a_version  <=> $pkg_b_version)
-           || ($dist_a_version <=> $dist_b_version);
+    # TODO: compare dist mtimes (but they are on the server!)
+    return  $pkg_a_version  <=> $pkg_b_version;
 }
 
 #------------------------------------------------------------------------------

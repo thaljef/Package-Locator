@@ -10,7 +10,6 @@ use Carp;
 use File::Temp;
 use Path::Class;
 use PerlIO::gzip;
-use Scalar::Util;
 use LWP::UserAgent;
 use URI::Escape;
 use URI;
@@ -111,9 +110,6 @@ values are data structures that look like this:
     packages => [ ## See package structure below ## ]
   }
 
-Note there is a circular reference between a package and a distribution.
-The package references have been weakened to prevent memory leaks.
-
 =cut
 
 has distributions => (
@@ -134,11 +130,8 @@ like this:
   {
     name         => 'Foo',
     version      => '1.0',
-    distribution => ## See distribution structure above ##
+    distribution => 'A/AU/AUTHOR/FooBar-1.0.tar.gz'
   }
-
-Note there is a circular reference between a package and a distribution.
-The package references have been weakened to prevent memory leaks.
 
 =cut
 
@@ -214,10 +207,9 @@ sub __read_index {
         chomp;
         my ($package, $version, $dist_path) = split;
         my $dist_struct = $distributions->{$dist_path} ||= { source => $source, path => $dist_path };
-        my $pkg_struct  = {name => $package, version => $version, distribution => $dist_struct};
+        my $pkg_struct  = {name => $package, version => $version, distribution => $dist_path};
         push @{ $dist_struct->{packages} ||= [] }, $pkg_struct;
         $packages->{$package} = $pkg_struct;
-        Scalar::Util::weaken($pkg_struct);
 
     }
 
