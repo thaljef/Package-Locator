@@ -27,4 +27,4 @@ throws_ok { $class->new()->locate('Foo', '2.3-RC') }
 
 
 throws_ok { $class->new( repository_urls => [ URI->new('http://bogus') ] )->locate('Foo') }
-    qr/Can't connect to bogus/;
+    qr{Request to http://bogus.* failed};
