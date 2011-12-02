@@ -25,10 +25,10 @@ my @repos_urls = map { URI->new("file://$repos_dir/$_") } qw(a b);
 my $locator = Package::Locator->new( repository_urls => \@repos_urls,
                                            cache_dir => $temp_dir );
 
-$found = $locator->locate('Foo' => 1.0);
+$found = $locator->locate(package => 'Foo', version => 1.0);
 is($found, "file://$repos_dir/a/authors/id/A/AU/AUTHOR/Foo-1.0.tar.gz", 'Located Foo-1.0');
 
-$found = $locator->locate('Foo' => 2.0);
+$found = $locator->locate(package => 'Foo', version => 2.0);
 is($found, "file://$repos_dir/b/authors/id/A/AU/AUTHOR/Foo-2.0.tar.gz", 'Located Foo-2.0');
 
 for my $url (@repos_urls) {
@@ -46,10 +46,10 @@ for my $url (@repos_urls) {
 $locator = Package::Locator->new( repository_urls => \@repos_urls,
                                         cache_dir => $temp_dir );
 
-$found = $locator->locate('Foo' => 1.0);
+$found = $locator->locate(package => 'Foo', version => 1.0);
 is($found, undef, 'Did not find Foo-1.0 in empty cache');
 
-$found = $locator->locate('Foo' => 2.0);
+$found = $locator->locate(package => 'Foo', version => 2.0);
 is($found, undef, 'Did not find Foo-2.0 in empty cache');
 
 
