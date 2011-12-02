@@ -1,5 +1,7 @@
 {{$NEXT}}
 
+0.004     2011-12-02 03:12:06 America/Los_Angeles
+
     Package::Locator::Index does its own parsing of the index file now,
     and can return the contents as a simple data structure.  Yes,
     I reinvented that wheel.  I have my reasons.
