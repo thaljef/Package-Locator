@@ -249,11 +249,21 @@ sub _locate_dist {
 sub __compare_packages {
     my ($self, $pkg_a, $pkg_b) = @_;
 
-    my $pkg_a_version = version->parse( $pkg_a->{version} );
-    my $pkg_b_version = version->parse( $pkg_b->{version} );
+    my $pkg_a_version = $self->__versionize( $pkg_a->{version} );
+    my $pkg_b_version = $self->__versionize( $pkg_b->{version} );
 
     # TODO: compare dist mtimes (but they are on the server!)
     return  $pkg_a_version  <=> $pkg_b_version;
+}
+
+#------------------------------------------------------------------------------
+
+sub __versionize {
+    my ($self, $version) = @_;
+
+    my $v = eval { version->parse($version) };
+
+    return defined $v ? $v : version->new(0);
 }
 
 #------------------------------------------------------------------------------
