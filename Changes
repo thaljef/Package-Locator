@@ -1,5 +1,9 @@
 {{$NEXT}}
 
+    Added clear_cache() method on the Package::Locator class.
+    This deletes the cached index files, causing subsequent
+    calls to locate() to fetch the index files anew.
+
 0.004     2011-12-02 03:12:06 America/Los_Angeles
 
     Package::Locator::Index does its own parsing of the index file now,

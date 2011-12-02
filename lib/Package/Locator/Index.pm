@@ -37,6 +37,7 @@ has repository_url => (
     coerce    => 1,
 );
 
+#------------------------------------------------------------------------
 
 =attr user_agent => $user_agent_obj
 
@@ -51,6 +52,8 @@ has user_agent => (
    isa         => 'LWP::UserAgent',
    default     => sub { LWP::UserAgent->new() },
 );
+
+#------------------------------------------------------------------------
 
 =attr cache_dir => '/some/directory/path'
 
@@ -69,6 +72,7 @@ has cache_dir => (
    coerce     => 1,
 );
 
+#------------------------------------------------------------------------
 
 =attr force => $boolean
 
@@ -84,6 +88,8 @@ has force => (
    default    => 0,
 );
 
+#------------------------------------------------------------------------
+
 =method index_file()
 
 Returns the path to the local copy of the index file (as a
@@ -97,6 +103,8 @@ has index_file => (
     init_arg   => undef,
     lazy_build => 1,
 );
+
+#------------------------------------------------------------------------
 
 =method distributions
 
@@ -121,6 +129,9 @@ has distributions => (
 );
 
 
+#------------------------------------------------------------------------
+
+
 =method packages
 
 Returns a hashref representing the contents of the index.  The keys
@@ -142,6 +153,9 @@ has packages => (
    default    => sub { $_[0]->_data->{packages} },
    lazy       => 1,
 );
+
+
+#------------------------------------------------------------------------
 
 
 has _data => (

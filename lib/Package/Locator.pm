@@ -93,7 +93,7 @@ has force => (
 
 #------------------------------------------------------------------------------
 
-=attr indexes()
+=method indexes()
 
 Returns a list of L<Package::Locator::Index> objects representing the
 indexes of each of the repositories.  The indexes are only populated
@@ -264,6 +264,25 @@ sub __versionize {
     my $v = eval { version->parse($version) };
 
     return defined $v ? $v : version->new(0);
+}
+
+#------------------------------------------------------------------------------
+
+=method clear_cache()
+
+Deletes the cached index files.  Any subsequent calls to the C<locate>
+method will cause the index files to be fetched anew.
+
+=cut
+
+sub clear_cache {
+    my ($self) = @_;
+
+    for my $index ( $self->indexes() ) {
+        $index->index_file->remove();
+    }
+
+    $self->clear_indexes();
 }
 
 #------------------------------------------------------------------------------

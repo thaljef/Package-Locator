@@ -9,7 +9,7 @@ use URI::Escape qw(uri_escape);
 use File::Temp qw(tempdir);
 use PerlIO::gzip;
 
-use Test::More (tests => 6);
+use Test::More;
 
 use Package::Locator;
 
@@ -52,7 +52,8 @@ is($found, undef, 'Did not find Foo-1.0 in empty cache');
 $found = $locator->locate(package => 'Foo', version => 2.0);
 is($found, undef, 'Did not find Foo-2.0 in empty cache');
 
+#------------------------------------------------------------------------------
 
-
+done_testing();
 
 
