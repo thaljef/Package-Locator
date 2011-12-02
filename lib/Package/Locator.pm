@@ -171,7 +171,7 @@ sub locate {
     }
     else {
         my $dist = $args{distribution};
-        return $self->_locate_dist($dist) if $dist;
+        return $self->_locate_dist($dist);
     }
 }
 
