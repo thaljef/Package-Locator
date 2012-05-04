@@ -234,12 +234,14 @@ sub _locate_package {
 sub _locate_dist {
     my ($self, $dist_path) = @_;
 
-    for my $index ( $self->indexes() ) {
-        if ( my $found_dist = $index->distributions->{$dist_path} ) {
-            my $base_url = $index->repository_url();
-            return URI->new( "$base_url/authors/id/" . $found_dist->{path} );
-        }
+    for my $index ( $self->indexes ) {
+        my $base_url = $index->repository_url();
+        my $dist_url =  URI->new("$base_url/authors/id/$dist_path");
+
+        return $dist_url if $index->distributions->{$dist_path};
+        return $dist_url if $self->user_agent->head($dist_url)->is_success;
     }
+
 
     return;
 }
