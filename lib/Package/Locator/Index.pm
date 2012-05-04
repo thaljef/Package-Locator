@@ -195,10 +195,10 @@ sub _build__data {
 
     my $file = $self->index_file();
     open my $fh, '<:gzip', $file or croak "Failed to open index file $file: $!";
-    my $data = $self->__read_index($fh);
+    my $index_data = $self->__read_index($fh);
     close $fh;
 
-    return $data;
+    return $index_data;
 }
 
 #------------------------------------------------------------------------------
