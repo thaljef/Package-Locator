@@ -3,6 +3,7 @@ package Package::Locator;
 # ABSTRACT: Find the distribution that provides a given package
 
 use Moose;
+use MooseX::MarkAsMethods (autoclean => 1);
 use MooseX::Types::Path::Class;
 
 use Carp;
@@ -15,7 +16,7 @@ use URI;
 use Package::Locator::Index;
 
 use version;
-use namespace::autoclean;
+
 
 #------------------------------------------------------------------------------
 

@@ -3,6 +3,7 @@ package Package::Locator::Index;
 # ABSTRACT: The package index of a repository
 
 use Moose;
+use MooseX::MarkAsMethods (autoclean => 1);
 use MooseX::Types::URI qw(Uri);
 use MooseX::Types::Path::Class;
 
@@ -13,8 +14,6 @@ use PerlIO::gzip;
 use LWP::UserAgent;
 use URI::Escape;
 use URI;
-
-use namespace::autoclean;
 
 #------------------------------------------------------------------------
 
