@@ -1,6 +1,6 @@
-package Package::Locator::Index;
-
 # ABSTRACT: The package index of a repository
+
+package Package::Locator::Index;
 
 use Moose;
 use MooseX::MarkAsMethods (autoclean => 1);

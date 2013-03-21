@@ -1,6 +1,6 @@
-package Package::Locator;
+# ABSTRACT: Find a package among CPAN-like repositories
 
-# ABSTRACT: Find the distribution that provides a given package
+package Package::Locator;
 
 use Moose;
 use MooseX::MarkAsMethods (autoclean => 1);
