@@ -3,14 +3,14 @@
 package Package::Locator::Index;
 
 use Moose;
-use MooseX::MarkAsMethods (autoclean => 1);
 use MooseX::Types::URI qw(Uri);
 use MooseX::Types::Path::Class;
+use MooseX::MarkAsMethods (autoclean => 1);
 
 use Carp;
 use File::Temp;
 use Path::Class;
-use PerlIO::gzip;
+use IO::Zlib;
 use LWP::UserAgent;
 use URI::Escape;
 use URI;
@@ -192,8 +192,8 @@ sub _build_index_file {
 sub _build__data {
     my ($self) = @_;
 
-    my $file = $self->index_file();
-    open my $fh, '<:gzip', $file or croak "Failed to open index file $file: $!";
+    my $file = $self->index_file->stringify;
+    my $fh = IO::Zlib->new($file, 'rb') or croak "Failed to open index file $file: $!";
     my $index_data = $self->__read_index($fh);
     close $fh;
 

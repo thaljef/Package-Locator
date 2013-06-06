@@ -1,5 +1,8 @@
 {{$NEXT}}
 
+    Now uses IO::Zlib instead of PerlIO::gzip so there is one less
+    non-core dependency.
+
 0.006     2012-05-04 16:00:24 America/Los_Angeles
 
     Added clear_cache() method on the Package::Locator class.
