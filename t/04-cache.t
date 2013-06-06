@@ -7,7 +7,7 @@ use Path::Class;
 use FindBin qw($Bin);
 use URI::Escape qw(uri_escape);
 use File::Temp qw(tempdir);
-use PerlIO::gzip;
+use IO::Zlib;
 
 use Test::More;
 
@@ -37,7 +37,7 @@ for my $url (@repos_urls) {
 
     # Erase contents of cache file.  But we still need the standard gzip header
     # or else there will be an exception when we try to open the file later.
-    open my $fh, '>:gzip', $cache_file;
+    my $fh = IO::Zlib->new($cache_file->stringify, 'wb');
     print $fh '';
     close $fh;
 }

@@ -1,5 +1,7 @@
 {{$NEXT}}
 
+    Also use IO::Zlib instead of PerlIO::gzip during tests.
+
 0.007     2013-06-05 22:18:56 America/Los_Angeles
 
     Now uses IO::Zlib instead of PerlIO::gzip so there is one less
