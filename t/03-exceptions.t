@@ -37,5 +37,5 @@ throws_ok { $class->new()->locate(package => 'Foo', version => '2.3-RC') }
 # places, depending on what you have.  So for now, I just test that
 # at least some kind of exception is thrown.
 
-my $bogus_urls = [ URI->new('http://bogus') ];
+my $bogus_urls = [ URI->new('http://__bogus__') ];
 dies_ok { $class->new(repository_urls => $bogus_urls)->locate(package => 'Foo') };
