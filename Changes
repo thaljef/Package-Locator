@@ -1,5 +1,8 @@
 {{$NEXT}}
 
+    Fixed some test failures reported by CPAN Testers.  
+    But no code changes in the library itself.
+
 0.008     2013-06-06 14:04:54 America/Los_Angeles
 
     Also use IO::Zlib instead of PerlIO::gzip during tests.
