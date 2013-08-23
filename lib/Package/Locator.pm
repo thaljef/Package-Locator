@@ -54,8 +54,15 @@ you.
 has user_agent => (
    is          => 'ro',
    isa         => 'LWP::UserAgent',
-   default     => sub { LWP::UserAgent->new() },
+   builder     => '_build_user_agent',
 );
+
+sub _build_user_agent {
+    my ($self) = @_;
+
+    my $agent = sprintf "%s/%s", ref $self, $self->VERSION || 'UNKNOWN';
+    return LWP::UserAgent->new(agent => $agent, env_proxy => 1, keep_alive => 5);
+}
 
 #------------------------------------------------------------------------------
 

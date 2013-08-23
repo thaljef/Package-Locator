@@ -1,5 +1,7 @@
 {{$NEXT}}
 
+    Use proxy settings from the environment, if available.
+
 0.009     2013-06-06 19:23:13 America/Los_Angeles
 
     Fixed some test failures reported by CPAN Testers.  
